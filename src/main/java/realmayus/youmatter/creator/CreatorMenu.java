@@ -2,7 +2,6 @@ package realmayus.youmatter.creator;
 
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
@@ -17,9 +16,6 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
 import realmayus.youmatter.ModContent;
-import realmayus.youmatter.YMConfig;
-import realmayus.youmatter.util.RegistryUtil;
-import realmayus.youmatter.util.Tags;
 
 
 public class CreatorMenu extends AbstractContainerMenu {
@@ -88,7 +84,7 @@ public class CreatorMenu extends AbstractContainerMenu {
                 }
             } else {
                 if(slotStack.getItem() instanceof BucketItem bucket) {
-                    if (bucket.getFluid().is(Tags.STABILIZER)) {
+                    if (bucket.getFluid().equals(ModContent.STABILIZER.get())) {
                         if(!this.moveItemStackTo(slotStack, 36, 37, false)) {
                             return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                         }
@@ -109,7 +105,7 @@ public class CreatorMenu extends AbstractContainerMenu {
                                 if(!this.moveItemStackTo(slotStack, 38, 39, false)) {
                                     return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                                 }
-                            } else if (h.getFluidInTank(0).is(Tags.STABILIZER)) {
+                            } else if (h.getFluidInTank(0).getFluid().isSame(ModContent.STABILIZER.get())) {
                                 if(!this.moveItemStackTo(slotStack, 36, 37, false)) {
                                     return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                                 }

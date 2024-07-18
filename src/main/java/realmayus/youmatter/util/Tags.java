@@ -7,9 +7,13 @@ import net.minecraft.world.level.material.Fluid;
 import realmayus.youmatter.YouMatter;
 
 public class Tags {
-    public static final TagKey<Fluid> STABILIZER = create("stabilizer");
 
-    public static TagKey<Fluid> create(String name) {
-        return FluidTags.create(new ResourceLocation(YouMatter.MODID, name));
+    public static class Fluids {
+
+        public static final TagKey<Fluid> STABILIZER = create("stabilizer");
+
+        public static TagKey<Fluid> create(String name) {
+            return FluidTags.create(new ResourceLocation(YouMatter.MODID, name));
+        }
     }
 }
