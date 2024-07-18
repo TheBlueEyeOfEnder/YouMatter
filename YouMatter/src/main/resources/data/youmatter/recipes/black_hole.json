@@ -1,0 +1,12 @@
+{
+  "result": {
+    "item": "youmatter:black_hole",
+    "count": 2
+  },
+  "type": "minecraft:crafting_shapeless",
+  "ingredients": [
+    {
+      "item": "youmatter:black_hole"
+    }
+  ]
+}
