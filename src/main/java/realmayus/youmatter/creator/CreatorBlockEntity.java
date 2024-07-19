@@ -29,6 +29,7 @@ import realmayus.youmatter.YMConfig;
 import realmayus.youmatter.replicator.ReplicatorBlockEntity;
 import realmayus.youmatter.util.GeneralUtils;
 import realmayus.youmatter.util.MyEnergyStorage;
+import realmayus.youmatter.util.Tags;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -123,7 +124,7 @@ public class CreatorBlockEntity extends BlockEntity implements MenuProvider {
         public boolean isFluidValid(int tank, @Nonnull FluidStack stack) {
             if (tank == 0) {
                 return false;
-            } else if (tank == 1 && stack.getFluid().equals(ModContent.STABILIZER.get())) {
+            } else if (tank == 1 && stack.getFluid().is(Tags.Fluids.STABILIZER)) {
                 return true;
             }
             return false;
@@ -131,7 +132,7 @@ public class CreatorBlockEntity extends BlockEntity implements MenuProvider {
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            if (resource.getFluid().equals(ModContent.STABILIZER.get())) {
+            if (resource.getFluid().is(Tags.Fluids.STABILIZER)) {
                 if (MAX_STABILIZER - getSTank().getFluidAmount() < resource.getAmount()) {
                     return sTank.fill(new FluidStack(resource.getFluid(), MAX_STABILIZER), action);
                 } else {
@@ -240,19 +241,18 @@ public class CreatorBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public void tick(Level level, BlockPos pos, BlockState state) {
-        if (currentPartTick == 40) {
-            for (Direction direction : Direction.values()) {
-                if (myEnergyStorage.get().getEnergyStored() <= 0) {
-                    return;
-                }
-                IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
-                if(energyStorage != null) {
+        if (currentPartTick == 40) { // 2 sec
+            if (myEnergyStorage.get().getEnergyStored() > 0) {
+                for (Direction direction : Direction.values()) {
                     if (isActivated()) {
-                        if (getEnergy() >= 0.3f * 1000000 && sTank.getFluidAmount() >= 125) { // if energy more than 30 % of max energy
-                            if (uTank.getFluidAmount() + YMConfig.CONFIG.productionPerTick.get() <= MAX_UMATTER) {
-                            sTank.drain(125, IFluidHandler.FluidAction.EXECUTE);
-                            uTank.fill(new FluidStack(ModContent.UMATTER.get(), YMConfig.CONFIG.productionPerTick.get()), IFluidHandler.FluidAction.EXECUTE);
-                            myEnergyStorage.get().extractEnergy(Math.round(getEnergy() / 3f), false);
+                        IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
+                        if (energyStorage != null) {
+                            if (getEnergy() >= 0.3f * 1000000 && sTank.getFluidAmount() >= 125) { // if energy more than 30 % of max energy
+                                if (uTank.getFluidAmount() + YMConfig.CONFIG.productionPerTick.get() <= MAX_UMATTER) {
+                                    sTank.drain(125, IFluidHandler.FluidAction.EXECUTE);
+                                    uTank.fill(new FluidStack(ModContent.UMATTER.get(), YMConfig.CONFIG.productionPerTick.get()), IFluidHandler.FluidAction.EXECUTE);
+                                    myEnergyStorage.get().extractEnergy(Math.round(getEnergy() / 3f), false);
+                                }
                             }
                         }
                     }
@@ -260,72 +260,65 @@ public class CreatorBlockEntity extends BlockEntity implements MenuProvider {
             }
             //Auto-outputting U-Matter
             Object[] neighborTE = getNeighborTileEntity(pos);
-            if (neighborTE != null) {
-                IFluidHandler h = level.getCapability(Capabilities.FluidHandler.BLOCK, (BlockPos) neighborTE[0], (Direction) neighborTE[1]);
-                if (h != null) {
+            if(neighborTE != null) {
+                IFluidHandler neighborHandler = level.getCapability(Capabilities.FluidHandler.BLOCK, ((BlockPos) neighborTE[0]), (Direction) neighborTE[1]);
+                if (neighborHandler != null) {
                     if (uTank.getFluidAmount() >= 500) { // set a maximum output of 500 mB (every two seconds)
-                        if (uTank.getFluidAmount() >= 500) { // set a maximum output of 500 mB (every two seconds)
-                            uTank.drain(h.fill(new FluidStack(ModContent.UMATTER.get(), 500), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
-                        } else {
-                            uTank.drain(h.fill(new FluidStack(ModContent.UMATTER.get(), uTank.getFluidAmount()), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
-                        }
+                        uTank.drain(neighborHandler.fill(new FluidStack(ModContent.UMATTER.get(), 500), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                    } else {
+                        uTank.drain(neighborHandler.fill(new FluidStack(ModContent.UMATTER.get(), uTank.getFluidAmount()), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
                     }
                 }
             }
             currentPartTick = 0;
         } else if ((currentPartTick % 5) == 0) { // every five ticks
-            if (inventory != null) {
-                if (!(inventory.get().getStackInSlot(3).isEmpty()) && GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(4), inventory.get().getStackInSlot(3), false)) {
-                    ItemStack item = inventory.get().getStackInSlot(3);
-                    if (item.getItem() instanceof BucketItem) {
-                        if (getUTank().getFluidAmount() >= 1000) {
-                            getUTank().drain(1000, IFluidHandler.FluidAction.EXECUTE);
-                            inventory.get().setStackInSlot(3, ItemStack.EMPTY);
-                            inventory.get().insertItem(4, new ItemStack(ModContent.UMATTER_BUCKET.get(), 1), false);
-                        }
-                    } else {
-                        IFluidHandlerItem h = item.getCapability(Capabilities.FluidHandler.ITEM);
-                        if (h != null) {
-                            if (h.getFluidInTank(0).getFluid().isSame(ModContent.UMATTER.get()) || h.getFluidInTank(0).isEmpty()) {
-                                if (h.getTankCapacity(0) - h.getFluidInTank(0).getAmount() < getUTank().getFluidAmount()) { //fluid in S-Tank is more than what fits in the item's tank
-                                    getUTank().drain(h.fill(new FluidStack(ModContent.UMATTER.get(), h.getTankCapacity(0) - h.getFluidInTank(0).getAmount()), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
-                                } else { //S-Tank's fluid fits perfectly in item's tank
-                                    getUTank().drain(h.fill(getUTank().getFluid(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
-                                }
-                            }
-                        }
+            ItemStack item = inventory.get().getStackInSlot(3);
+            if (!(item.isEmpty()) && GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(4), item, false)) {
+                if (item.getItem() instanceof BucketItem) {
+                    if (getUTank().getFluidAmount() >= 1000) {
+                        getUTank().drain(1000, IFluidHandler.FluidAction.EXECUTE);
                         inventory.get().setStackInSlot(3, ItemStack.EMPTY);
-                        inventory.get().insertItem(4, item, false);
+                        inventory.get().insertItem(4, new ItemStack(ModContent.UMATTER_BUCKET.get(), 1), false);
                     }
+                } else {
+                    IFluidHandlerItem itemHandler = item.getCapability(Capabilities.FluidHandler.ITEM);
+                    if(itemHandler != null) {
+                        if (itemHandler.getFluidInTank(0).getFluid().isSame(ModContent.UMATTER.get()) || itemHandler.getFluidInTank(0).isEmpty()) {
+                            if (itemHandler.getTankCapacity(0) - itemHandler.getFluidInTank(0).getAmount() < getUTank().getFluidAmount()) { //fluid in S-Tank is more than what fits in the item's tank
+                                getUTank().drain(itemHandler.fill(new FluidStack(ModContent.UMATTER.get(), itemHandler.getTankCapacity(0) - itemHandler.getFluidInTank(0).getAmount()), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                            } else { //S-Tank's fluid fits perfectly in item's tank
+                                getUTank().drain(itemHandler.fill(getUTank().getFluid(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                            }
+                        }
+                    }
+                    inventory.get().setStackInSlot(3, ItemStack.EMPTY);
+                    inventory.get().insertItem(4, item, false);
                 }
-                if (!inventory.get().getStackInSlot(1).isEmpty()) {
-                    ItemStack item = inventory.get().getStackInSlot(1);
+            }
+            item = inventory.get().getStackInSlot(1);
+            if (!item.isEmpty()) {
+                IFluidHandlerItem itemHandler = item.getCapability(Capabilities.FluidHandler.ITEM);
+                if(itemHandler != null) {
                     if (item.getItem() instanceof BucketItem && GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(2), new ItemStack(Items.BUCKET, 1), false)) {
-                        IFluidHandlerItem h = item.getCapability(Capabilities.FluidHandler.ITEM);
-                        if (h != null) {
-                            if (!h.getFluidInTank(0).isEmpty() && (h.getFluidInTank(0).getFluid().isSame(ModContent.STABILIZER.get()))) {
-                                if (MAX_STABILIZER - getSTank().getFluidAmount() >= 1000) {
-                                    getSTank().fill(new FluidStack(ModContent.STABILIZER.get(), 1000), IFluidHandler.FluidAction.EXECUTE);
-                                    inventory.get().setStackInSlot(1, ItemStack.EMPTY);
-                                    inventory.get().insertItem(2, new ItemStack(Items.BUCKET, 1), false);
-                                }
+                        if (!itemHandler.getFluidInTank(0).isEmpty() && (itemHandler.getFluidInTank(0).getFluid().is(Tags.Fluids.STABILIZER))) {
+                            if (MAX_STABILIZER - getSTank().getFluidAmount() >= 1000) {
+                                getSTank().fill(new FluidStack(itemHandler.getFluidInTank(0).getFluid(), 1000), IFluidHandler.FluidAction.EXECUTE);
+                                inventory.get().setStackInSlot(1, ItemStack.EMPTY);
+                                inventory.get().insertItem(2, new ItemStack(Items.BUCKET, 1), false);
                             }
                         }
-                    } else if(GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(2), inventory.get().getStackInSlot(1), false)) {
-                        IFluidHandlerItem h = item.getCapability(Capabilities.FluidHandler.ITEM);
-                        if (h != null) {
-                            if (h.getFluidInTank(0).getFluid().isSame(ModContent.STABILIZER.get())) {
-                                if (h.getFluidInTank(0).getAmount() > MAX_STABILIZER - getSTank().getFluidAmount()) { //given fluid is more than what fits in the S-Tank
-                                    getSTank().fill(h.drain(MAX_STABILIZER - getSTank().getFluidAmount(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
-                                } else { //given fluid fits perfectly in S-Tank
-                                    getSTank().fill(h.drain(h.getFluidInTank(0).getAmount(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
-                                }
+                    } else if (GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(2), item, false)) {
+                        if (itemHandler.getFluidInTank(0).getFluid().is(Tags.Fluids.STABILIZER)) {
+                            if (itemHandler.getFluidInTank(0).getAmount() > MAX_STABILIZER - getSTank().getFluidAmount()) { //given fluid is more than what fits in the S-Tank
+                                getSTank().fill(itemHandler.drain(MAX_STABILIZER - getSTank().getFluidAmount(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                            } else { //given fluid fits perfectly in S-Tank
+                                getSTank().fill(itemHandler.drain(itemHandler.getFluidInTank(0).getAmount(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
                             }
                         }
-                        inventory.get().setStackInSlot(1, ItemStack.EMPTY);
-                        inventory.get().insertItem(2, item, false);
                     }
                 }
+                inventory.get().setStackInSlot(1, ItemStack.EMPTY);
+                inventory.get().insertItem(2, item, false);
             }
             currentPartTick++;
         } else {

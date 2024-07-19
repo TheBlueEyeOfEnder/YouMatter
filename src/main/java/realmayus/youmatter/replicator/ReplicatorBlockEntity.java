@@ -275,29 +275,28 @@ public class ReplicatorBlockEntity extends BlockEntity implements MenuProvider {
                                             }
                                             progress = 0;
                                         } else {
-                                            for (Direction direction : Direction.values()) {
-                                                if (myEnergyStorage.get().getEnergyStored() <= 0) {
-                                                    return;
-                                                }
-                                                if (currentItem != null) {
-                                                    if (!currentItem.isEmpty()) {
-                                                        if (ItemStack.isSameItem(currentItem, inventory.get().getStackInSlot(2))) { // Check if selected item hasn't changed
-                                                            if (inventory.get().getStackInSlot(1).isEmpty() || GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(1), currentItem, false)) { //check if output slot is still empty
-                                                                IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
-                                                                if (energyStorage != null) {
-                                                                    if (myEnergyStorage.get().getEnergyStored() >= YMConfig.CONFIG.energyReplicator.get()) {
-                                                                        progress++;
-                                                                        myEnergyStorage.get().extractEnergy(YMConfig.CONFIG.energyReplicator.get(), false);
+                                            if (myEnergyStorage.get().getEnergyStored() > 0) {
+                                                for (Direction direction : Direction.values()) {
+                                                    if (currentItem != null) {
+                                                        if (!currentItem.isEmpty()) {
+                                                            if (ItemStack.isSameItem(currentItem, inventory.get().getStackInSlot(2))) { // Check if selected item hasn't changed
+                                                                if (inventory.get().getStackInSlot(1).isEmpty() || GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(1), currentItem, false)) { //check if output slot is still empty
+                                                                    IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
+                                                                    if (energyStorage != null) {
+                                                                        if (myEnergyStorage.get().getEnergyStored() >= YMConfig.CONFIG.energyReplicator.get()) {
+                                                                            progress++;
+                                                                            myEnergyStorage.get().extractEnergy(YMConfig.CONFIG.energyReplicator.get(), false);
+                                                                        }
                                                                     }
                                                                 }
+                                                            } else {
+                                                                progress = 0; // abort if not
                                                             }
-                                                        } else {
-                                                            progress = 0; // abort if not
                                                         }
-                                                    }
-                                                } else {
-                                                    if (cachedItems.get(currentIndex) != null) { //in case the current item isn't loaded yet -> this happens when reloading the world, see issue #31 on GitHub
-                                                        currentItem = cachedItems.get(currentIndex);
+                                                    } else {
+                                                        if (cachedItems.get(currentIndex) != null) { //in case the current item isn't loaded yet -> this happens when reloading the world, see issue #31 on GitHub
+                                                            currentItem = cachedItems.get(currentIndex);
+                                                        }
                                                     }
                                                 }
                                             }

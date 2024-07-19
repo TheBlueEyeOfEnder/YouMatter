@@ -16,6 +16,7 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
 import realmayus.youmatter.ModContent;
+import realmayus.youmatter.util.Tags;
 
 
 public class CreatorMenu extends AbstractContainerMenu {
@@ -84,7 +85,7 @@ public class CreatorMenu extends AbstractContainerMenu {
                 }
             } else {
                 if(slotStack.getItem() instanceof BucketItem bucket) {
-                    if (bucket.getFluid().equals(ModContent.STABILIZER.get())) {
+                    if (bucket.getFluid().is(Tags.Fluids.STABILIZER)) {
                         if(!this.moveItemStackTo(slotStack, 36, 37, false)) {
                             return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                         }
@@ -105,7 +106,7 @@ public class CreatorMenu extends AbstractContainerMenu {
                                 if(!this.moveItemStackTo(slotStack, 38, 39, false)) {
                                     return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                                 }
-                            } else if (h.getFluidInTank(0).getFluid().isSame(ModContent.STABILIZER.get())) {
+                            } else if (h.getFluidInTank(0).getFluid().is(Tags.Fluids.STABILIZER)) {
                                 if(!this.moveItemStackTo(slotStack, 36, 37, false)) {
                                     return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                                 }

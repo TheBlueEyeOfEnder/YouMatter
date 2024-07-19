@@ -142,10 +142,10 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
                 if (processIS != ItemStack.EMPTY) {
                     if (inventory != null) {
                         if (inventory.get().getStackInSlot(1).getItem() instanceof ThumbdriveItem) {
+                            if (myEnergyStorage.get().getEnergyStored() <= 0) {
+                                return;
+                            }
                             for (Direction direction : Direction.values()) {
-                                if (myEnergyStorage.get().getEnergyStored() <= 0) {
-                                    return;
-                                }
                             IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
                             if (progress < 100) {
                                 if (getEnergy() >= YMConfig.CONFIG.energyEncoder.get()) {
