@@ -137,7 +137,7 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public void tick(Level level, BlockPos pos, BlockState state) {
-            if (queue.size() > 0) {
+            if (!queue.isEmpty()) {
                 ItemStack processIS = queue.get(queue.size() - 1);
                 if (processIS != ItemStack.EMPTY) {
                     if (inventory != null) {

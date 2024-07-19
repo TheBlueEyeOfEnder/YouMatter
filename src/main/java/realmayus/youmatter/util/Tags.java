@@ -12,6 +12,8 @@ public class Tags {
 
         public static final TagKey<Fluid> STABILIZER = create("stabilizer");
 
+        public static final TagKey<Fluid> MATTER = create("matter");
+
         public static TagKey<Fluid> create(String name) {
             return FluidTags.create(new ResourceLocation(YouMatter.MODID, name));
         }

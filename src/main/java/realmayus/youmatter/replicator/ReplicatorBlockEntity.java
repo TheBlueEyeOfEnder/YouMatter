@@ -33,6 +33,7 @@ import realmayus.youmatter.ModContent;
 import realmayus.youmatter.YMConfig;
 import realmayus.youmatter.util.GeneralUtils;
 import realmayus.youmatter.util.MyEnergyStorage;
+import realmayus.youmatter.util.Tags;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -121,7 +122,7 @@ public class ReplicatorBlockEntity extends BlockEntity implements MenuProvider {
 
         @Override
         public int fill(FluidStack resource, FluidAction action) {
-            if (resource.getFluid().equals(ModContent.UMATTER.get())) {
+            if (resource.getFluid().is(Tags.Fluids.MATTER)) {
                 if (MAX_UMATTER - getTank().getFluidAmount() < resource.getAmount()) {
                     return tank.fill(new FluidStack(resource.getFluid(), MAX_UMATTER), action);
                 } else {
@@ -134,15 +135,17 @@ public class ReplicatorBlockEntity extends BlockEntity implements MenuProvider {
         @Nonnull
         @Override
         public FluidStack drain(FluidStack resource, FluidAction action) {
-            assert ModContent.UMATTER.get() != null;
-            return new FluidStack(ModContent.UMATTER.get(), 0);
+            return new FluidStack(resource.getFluid(), 0);
         }
 
         @Nonnull
         @Override
         public FluidStack drain(int maxDrain, FluidAction action) {
-            assert ModContent.UMATTER.get() != null;
-            return new FluidStack(ModContent.UMATTER.get(), 0);
+            if (tank.getFluid().getFluid() != null) {
+                return tank.drain(tank.getFluid(), action);
+            } else {
+                return null;
+            }
         }
     });
 
@@ -198,9 +201,9 @@ public class ReplicatorBlockEntity extends BlockEntity implements MenuProvider {
                     if (item.getItem() instanceof BucketItem && GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(4), new ItemStack(Items.BUCKET, 1), false)) {
                         IFluidHandlerItem h = item.getCapability(Capabilities.FluidHandler.ITEM);
                         if (h != null) {
-                            if (!h.getFluidInTank(0).isEmpty() && h.getFluidInTank(0).getFluid().isSame(ModContent.UMATTER.get())) {
+                            if (!h.getFluidInTank(0).isEmpty() && h.getFluidInTank(0).getFluid().is(Tags.Fluids.MATTER)) {
                                 if (MAX_UMATTER - getTank().getFluidAmount() >= 1000) {
-                                    getTank().fill(new FluidStack(ModContent.UMATTER.get(), 1000), IFluidHandler.FluidAction.EXECUTE);
+                                    getTank().fill(new FluidStack(h.getFluidInTank(0).getFluid(), 1000), IFluidHandler.FluidAction.EXECUTE);
                                     inventory.get().setStackInSlot(3, ItemStack.EMPTY);
                                     inventory.get().insertItem(4, new ItemStack(Items.BUCKET, 1), false);
                                 }
@@ -209,7 +212,7 @@ public class ReplicatorBlockEntity extends BlockEntity implements MenuProvider {
                     } else if (GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(4), inventory.get().getStackInSlot(3), false)) {
                         IFluidHandlerItem h = item.getCapability(Capabilities.FluidHandler.ITEM);
                         if (h != null) {
-                            if (h.getFluidInTank(0).getFluid().isSame(ModContent.UMATTER.get())) {
+                            if (h.getFluidInTank(0).getFluid().is(Tags.Fluids.MATTER)) {
                                 if (h.getFluidInTank(0).getAmount() > MAX_UMATTER - getTank().getFluidAmount()) { //given fluid is more than what fits in the U-Tank
                                     getTank().fill(h.drain(MAX_UMATTER - getTank().getFluidAmount(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
                                 } else { //given fluid fits perfectly in U-Tank

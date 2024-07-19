@@ -1,5 +1,6 @@
 package realmayus.youmatter.creator;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -49,12 +50,7 @@ public class CreatorScreen extends AbstractContainerScreen<CreatorMenu> {
     }
 
     private void drawActiveIcon(GuiGraphics guiGraphics, boolean isActive) {
-        if(isActive) {
-            guiGraphics.blit(GUI, 154, 13, 176, 24, 8, 9);
-
-        } else {
-            guiGraphics.blit(GUI, 154, 13, 176, 15, 8, 9);
-        }
+        guiGraphics.blit(GUI, 154, 13, 176, isActive ? 24 : 15, 8, 9);
     }
 
 
@@ -90,7 +86,11 @@ public class CreatorScreen extends AbstractContainerScreen<CreatorMenu> {
         int yAxis = (mouseY - (height - imageHeight) / 2);
 
         if(xAxis >= 31 && xAxis <= 44 && yAxis >= 20 && yAxis <= 75) {
-            drawTooltip(guiGraphics, mouseX, mouseY, Arrays.asList(Component.literal(I18n.get("youmatter.gui.stabilizer.title")), Component.literal(I18n.get("youmatter.gui.stabilizer.description", creator.getSTank().getFluidAmount()))));
+            if (!creator.getSTank().isEmpty()) {
+                drawTooltip(guiGraphics, mouseX, mouseY, Arrays.asList(Component.literal(I18n.get(creator.getSTank().getFluidInTank(0).getTranslationKey())).withStyle(ChatFormatting.GOLD), Component.literal(I18n.get("youmatter.gui.stabilizer.description", creator.getSTank().getFluidAmount()))));
+            } else {
+                drawTooltip(guiGraphics, mouseX, mouseY, Arrays.asList(Component.literal(I18n.get("youmatter.gui.stabilizer.title")), Component.literal(I18n.get("youmatter.gui.stabilizer.description", creator.getSTank().getFluidAmount()))));
+            }
         }
         if(xAxis >= 89 && xAxis <= 102 && yAxis >= 20 && yAxis <= 75) {
             drawTooltip(guiGraphics, mouseX, mouseY, Arrays.asList(Component.literal(I18n.get("youmatter.gui.umatter.title")), Component.literal(I18n.get("youmatter.gui.umatter.description", creator.getUTank().getFluidAmount()))));

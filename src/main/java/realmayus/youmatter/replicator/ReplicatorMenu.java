@@ -17,6 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import realmayus.youmatter.ModContent;
 import realmayus.youmatter.items.ThumbdriveItem;
 import realmayus.youmatter.util.DisplaySlot;
+import realmayus.youmatter.util.Tags;
 
 public class ReplicatorMenu extends AbstractContainerMenu {
 
@@ -85,7 +86,7 @@ public class ReplicatorMenu extends AbstractContainerMenu {
                         return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                     }
                 } else if(slotStack.getItem() instanceof BucketItem bucket) {
-                    if(bucket.getFluid().equals(ModContent.UMATTER.get())) {
+                    if(bucket.getFluid().is(Tags.Fluids.MATTER)) {
                         if(!this.moveItemStackTo(slotStack, 39, 40, false)) {
                             return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                         }
@@ -93,7 +94,7 @@ public class ReplicatorMenu extends AbstractContainerMenu {
                 } else {
                     IFluidHandlerItem h = slotStack.getCapability(Capabilities.FluidHandler.ITEM);
                     if(h != null) {
-                            if (h.getFluidInTank(0).getFluid().isSame(ModContent.UMATTER.get())) {
+                            if (h.getFluidInTank(0).getFluid().is(Tags.Fluids.MATTER)) {
                                 if(!this.moveItemStackTo(slotStack, 39, 40, false)) {
                                     return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                                 }
