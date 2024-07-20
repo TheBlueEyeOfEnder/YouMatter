@@ -14,9 +14,4 @@ public class ComputeModuleItem extends Item {
     public ComputeModuleItem() {
         super(new Properties());
     }
-
-    @Override
-    public void appendHoverText(ItemStack stack, @Nullable Level level, List<Component> tooltip, TooltipFlag flag) {
-        tooltip.add(Component.literal(I18n.get("youmatter.tooltip.craftingItem")));
-    }
 }

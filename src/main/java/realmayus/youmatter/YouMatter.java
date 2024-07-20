@@ -12,7 +12,7 @@ import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 
-// The value here should match an entry in the META-INF/neoforge.mods.toml file
+// The value here should match an entry in the META-INF/neoforge.neoforge.mods.toml file
 @Mod(YouMatter.MODID)
 // @Mod.EventBusSubscriber(modid = "youmatter")
 public class YouMatter {
@@ -21,7 +21,7 @@ public class YouMatter {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = CREATIVE_MODE_TABS.register("tab", () -> CreativeModeTab.builder()
             .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
-            .icon(() -> new ItemStack(ModContent.SCANNER_BLOCK.get()))
+            .icon(() -> new ItemStack(ModContent.THUMBDRIVE_ITEM.get()))
             .title(Component.literal("YouMatter")) //todo localize
             .displayItems((displayParameters, output) -> {
                 output.acceptAll(List.of(
@@ -34,9 +34,9 @@ public class YouMatter {
                         new ItemStack(ModContent.COMPUTE_MODULE_ITEM.get()),
                         new ItemStack(ModContent.TRANSISTOR_RAW_ITEM.get()),
                         new ItemStack(ModContent.TRANSISTOR_ITEM.get()),
-                        new ItemStack(ModContent.THUMBDRIVE_ITEM.get()),
-                        new ItemStack(ModContent.UMATTER_BUCKET.get()),
-                        new ItemStack(ModContent.STABILIZER_BUCKET.get())));
+                        new ItemStack(ModContent.THUMBDRIVE_ITEM.get())));
+                       /* new ItemStack(ModContent.UMATTER_BUCKET.get()),
+                        new ItemStack(ModContent.STABILIZER_BUCKET.get()))); */
             }).build());
 
     public YouMatter(IEventBus modEventBus) {
