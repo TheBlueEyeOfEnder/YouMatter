@@ -1,22 +1,36 @@
-package realmayus.youmatter.encoder;
-
-import com.ibm.icu.impl.ValidIdentifiers;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.MenuProvider;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.inventory.AbstractContainerMenu;
+import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.ItemLike;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.common.util.Lazy;
+import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import realmayus.youmatter.ModContent;
+import realmayus.youmatter.YMConfig;
+import realmayus.youmatter.items.ThumbdriveItem;
 import realmayus.youmatter.util.MyEnergyStorage;
 
+import javax.annotation.Nullable;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
 
@@ -35,12 +49,16 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
 
 
     // Calling this method signals incoming data from a neighboring scanner
-    public void ignite(ItemStack itemStack) {
-        if(itemStack != ItemStack.EMPTY && itemStack != null) {
-            queue.add(itemStack);
+    public void ignite(Set<Item> items) {
+        if (items != null) {
+            List<ItemStack> itemStacks = items.stream()
+                    .map(item -> new ItemStack(item))
+                    .collect(Collectors.toList());
+            queue.addAll(itemStacks);
             setChanged();
         }
     }
+
 
     private int progress = 0;
 
@@ -88,25 +106,25 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     @Override
-    public void saveAdditional(CompoundTag compound) {
-        super.saveAdditional(compound);
+    public void saveAdditional(CompoundTag compound, HolderLookup.Provider provider) {
+        super.saveAdditional(compound, provider);
         compound.putInt("progress", getProgress());
         compound.putInt("energy", getEnergy());
         if (inventory != null) {
-            compound.put("inventory", inventory.get().serializeNBT());
+            compound.put("inventory", inventory.get().serializeNBT(provider));
         }
         ListTag tempCompoundList = new ListTag();
         for (ItemStack is : queue) {
             if (!is.isEmpty()) {
-                tempCompoundList.add(is.save(new CompoundTag()));
+                tempCompoundList.add(is.save(provider, new CompoundTag()));
             }
         }
         compound.put("queue", tempCompoundList);
     }
 
     @Override
-    public CompoundTag getUpdateTag() {
-        return saveWithoutMetadata();
+    public CompoundTag getUpdateTag(HolderLookup.Provider provider) {
+        return saveWithoutMetadata(provider);
     }
 
     @Override
@@ -126,8 +144,8 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
 
     public void tick(Level level, BlockPos pos, BlockState state) {
         if (!queue.isEmpty()) {
-            ItemStack processIS = queue.get(queue.size() - 1);
-            if (processIS != ItemStack.EMPTY) {
+            ItemStack processIS = queue.getLast();
+            if (processIS != null) {
                 if (inventory != null) {
                     if (inventory.get().getStackInSlot(1).getItem() instanceof ThumbdriveItem) {
                         if (myEnergyStorage.get().getEnergyStored() <= 0) {
@@ -137,50 +155,42 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
                             IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
                             if (progress < 100) {
                                 if (getEnergy() >= YMConfig.CONFIG.energyEncoder.get()) {
-                                    CompoundTag nbt = inventory.get().getStackInSlot(1).getTag();
-                                    if (nbt != null) {
-                                        if (nbt.contains("stored_items")) {
-                                            ListTag list = nbt.getList("stored_items", Tag.TAG_STRING);
-                                            if (list.size() < 8) {
-                                                if (energyStorage != null) {
-                                                    progress = progress + 1;
-                                                    myEnergyStorage.get().extractEnergy(YMConfig.CONFIG.energyEncoder.get(), false);
-                                                }
+                                    Set<Item> itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
+                                    if (itemsStored != null) {
+                                        if (itemsStored.size() < 8) {
+                                            if (energyStorage != null) {
+                                                progress = progress + 1;
+                                                myEnergyStorage.get().extractEnergy(YMConfig.CONFIG.energyEncoder.get(), false);
                                             }
                                         }
-                                    } else {
-                                        if (energyStorage != null) {
-                                            progress = progress + 1; //doesn't have data stored yet
-                                            myEnergyStorage.get().extractEnergy(YMConfig.CONFIG.energyEncoder.get(), false);
-                                        }
+                                    }
+                                } else {
+                                    if (energyStorage != null) {
+                                        progress = progress + 1; //doesn't have data stored yet
+                                        myEnergyStorage.get().extractEnergy(YMConfig.CONFIG.energyEncoder.get(), false);
                                     }
                                 }
                             } else {
-                                DataComponents nbt = inventory.get().getStackInSlot(1).getTag();
-                                if (nbt != null) {
-                                    if (nbt.contains("stored_items")) {
-                                        ListTag list = nbt.getList("stored_items", Tag.TAG_STRING);
-                                        if (list.size() < 8) {
-                                            list.add(StringTag.valueOf(RegistryUtil.getRegistryName(processIS.getItem()) + ""));
-                                            nbt.put("stored_items", list);
-                                        }
-                                    } else {
-                                        ListTag list = new ListTag();
-                                        list.add(StringTag.valueOf(RegistryUtil.getRegistryName(processIS.getItem()) + ""));
-                                        nbt.put("stored_items", list);
+                                Set<Item> itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
+                                if (itemsStored != null) {
+                                    if (itemsStored.size() < 8) {
+                                        itemsStored.add(processIS.getItem());
+                                        inventory.get().getStackInSlot(1).set(ModContent.ITEMS_STORED_DATA.get(), new HashSet<Item>());
                                     }
                                 } else {
-                                    nbt = new CompoundTag();
-                                    ListTag list = new ListTag();
-                                    list.add(StringTag.valueOf(RegistryUtil.getRegistryName(processIS.getItem()) + ""));
-                                    nbt.put("stored_items", list);
-                                    inventory.get().getStackInSlot(1).setTag(nbt);
+                                    itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
+                                    itemsStored.add(processIS.getItem());
+                                    inventory.get().getStackInSlot(1).set(ModContent.ITEMS_STORED_DATA.get(), new HashSet<Item>());
                                 }
-                                queue.remove(processIS);
-                                progress = 0;
                             }
                         }
+                    } else {
+                        Set<Item> itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
+                        itemsStored.add(processIS.getItem());
+                        inventory.get().getStackInSlot(1).set(ModContent.ITEMS_STORED_DATA.get(), new HashSet<Item>());
                     }
+                    queue.remove(processIS);
+                    progress = 0;
                 }
             }
         }
