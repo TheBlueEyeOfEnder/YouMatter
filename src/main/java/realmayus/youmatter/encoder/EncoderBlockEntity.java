@@ -3,6 +3,7 @@ package realmayus.youmatter.encoder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -15,6 +16,7 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -28,10 +30,7 @@ import realmayus.youmatter.items.ThumbdriveItem;
 import realmayus.youmatter.util.MyEnergyStorage;
 
 import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
 
@@ -153,9 +152,9 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
                             IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
                             if (progress < 100) {
                                 if (getEnergy() >= YMConfig.CONFIG.energyEncoder.get()) {
-                                    Set<Item> itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
+                                    ItemContainerContents itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
                                     if (itemsStored != null) {
-                                        if (itemsStored.size() < 8) {
+                                        if (itemsStored.getSlots() < 8) {
                                             if (energyStorage != null) {
                                                 progress = progress + 1;
                                                 myEnergyStorage.get().extractEnergy(YMConfig.CONFIG.energyEncoder.get(), false);
@@ -169,23 +168,18 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
                                     }
                                 }
                             } else {
-                                Set<Item> itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
+                                ItemContainerContents itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
                                 if (itemsStored != null) {
-                                    if (itemsStored.size() < 8) {
-                                        itemsStored.add(processIS.getItem());
-                                        inventory.get().getStackInSlot(1).set(ModContent.ITEMS_STORED_DATA.get(), new HashSet<Item>());
+                                    if (itemsStored.getSlots() < 8) {
+                                        inventory.get().getStackInSlot(1).set(ModContent.ITEMS_STORED_DATA.get(), ItemContainerContents.fromItems(Collections.singletonList(processIS.copy())));
                                     }
                                 } else {
-                                    itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
-                                    itemsStored.add(processIS.getItem());
-                                    inventory.get().getStackInSlot(1).set(ModContent.ITEMS_STORED_DATA.get(), new HashSet<Item>());
+                                    inventory.get().getStackInSlot(1).set(ModContent.ITEMS_STORED_DATA.get(), ItemContainerContents.fromItems(Collections.singletonList(processIS.copy())));
                                 }
                             }
                         }
                     } else {
-                        Set<Item> itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
-                        itemsStored.add(processIS.getItem());
-                        inventory.get().getStackInSlot(1).set(ModContent.ITEMS_STORED_DATA.get(), new HashSet<Item>());
+                        inventory.get().getStackInSlot(1).set(ModContent.ITEMS_STORED_DATA.get(), ItemContainerContents.EMPTY);
                     }
                     queue.remove(processIS);
                     progress = 0;

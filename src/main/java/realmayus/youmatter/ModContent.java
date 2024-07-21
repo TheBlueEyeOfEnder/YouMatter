@@ -10,6 +10,7 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.material.Fluid;
@@ -36,6 +37,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import static net.minecraft.core.component.DataComponentType.builder;
+
 public class ModContent {
 
     public static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(BuiltInRegistries.BLOCK, YouMatter.MODID);
@@ -46,14 +49,10 @@ public class ModContent {
     public static final DeferredRegister<FluidType> FLUID_TYPES = DeferredRegister.create(NeoForgeRegistries.FLUID_TYPES, YouMatter.MODID);
     public static final DeferredRegister.DataComponents DATA_COMPONENTS = DeferredRegister.createDataComponents(YouMatter.MODID);
 
-    public static Codec<Set<Item>> ITEM_SET_CODEC = BuiltInRegistries.ITEM.byNameCodec().listOf().xmap(Set::copyOf, List::copyOf);
-    public static StreamCodec<RegistryFriendlyByteBuf, Set<Item>> ITEM_SET_STREAM_CODEC =
-            ByteBufCodecs.registry(Registries.ITEM).apply(ByteBufCodecs.collection (HashSet::new));
-
-    public static final DeferredHolder<DataComponentType<?>, DataComponentType<Set<Item>>> ITEMS_STORED_DATA = DATA_COMPONENTS.registerComponentType(
-            "items_stored", builder -> builder
-                    .persistent(ITEM_SET_CODEC)
-                    .networkSynchronized(ITEM_SET_STREAM_CODEC));
+    public static final DeferredHolder<DataComponentType<?>, DataComponentType<ItemContainerContents>> ITEMS_STORED_DATA = DATA_COMPONENTS.register(
+            "items_stored", () -> DataComponentType.<ItemContainerContents>builder()
+                    .persistent(ItemContainerContents.CODEC)
+                    .networkSynchronized(ItemContainerContents.STREAM_CODEC).build());
 
     public static final DeferredHolder<Block, ScannerBlock> SCANNER_BLOCK = BLOCKS.register("scanner", ScannerBlock::new);
     public static final DeferredHolder<MenuType<?>, MenuType<ScannerMenu>> SCANNER_MENU = MENU_TYPES.register("scanner", () -> IMenuTypeExtension.create((windowId, inv, data) -> new ScannerMenu(windowId, inv.player.level(), data.readBlockPos(), inv, inv.player)));

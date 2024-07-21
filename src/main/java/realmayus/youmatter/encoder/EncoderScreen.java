@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.item.Item;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import realmayus.youmatter.ModContent;
 import realmayus.youmatter.YouMatter;
@@ -47,9 +48,9 @@ public class EncoderScreen extends AbstractContainerScreen<EncoderMenu> {
             if (encoder.inventory != null) {
                 ItemStackHandler inventory = encoder.inventory.get();
                 if (inventory.getStackInSlot(1).getItem() instanceof ThumbdriveItem) {
-                    Set<Item> itemsStored = inventory.getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
+                    ItemContainerContents itemsStored = inventory.getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
                     if (itemsStored != null) {
-                        if (itemsStored.size() >= 8) {
+                        if (itemsStored.getSlots() >= 8) {
                             drawTooltip(guiGraphics, mouseX, mouseY, Arrays.asList(Component.literal(I18n.get("youmatter.warning.encoder2"))));
                         }
                     }
@@ -78,9 +79,9 @@ public class EncoderScreen extends AbstractContainerScreen<EncoderMenu> {
             if (!(encoder.inventory.get().getStackInSlot(1).getItem() instanceof ThumbdriveItem)) {
                 guiGraphics.blit(GUI, 16, 59, 176, 66, 16, 16);
             } else {
-                Set<Item> itemsStored = encoder.inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
+                ItemContainerContents itemsStored = encoder.inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
                 if (itemsStored != null) {
-                    if (itemsStored.size() >= 8) {
+                    if (itemsStored.getSlots() >= 8) {
                         guiGraphics.blit(GUI, 16, 59, 176, 66, 16, 16);
                     }
                 }
