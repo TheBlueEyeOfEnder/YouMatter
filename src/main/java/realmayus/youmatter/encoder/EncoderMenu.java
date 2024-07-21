@@ -1,4 +1,4 @@
-package realmayus.youmatter.scanner;
+package realmayus.youmatter.encoder;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.entity.player.Inventory;
@@ -11,16 +11,17 @@ import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
 import realmayus.youmatter.ModContent;
+import realmayus.youmatter.items.ThumbdriveItem;
 
-public class ScannerMenu extends AbstractContainerMenu {
+public class EncoderMenu extends AbstractContainerMenu {
 
-    public ScannerBlockEntity scanner;
+
+    public EncoderBlockEntity encoder;
     private IItemHandler playerInventory;
 
-
-    public ScannerMenu(int windowId, Level level, BlockPos pos, Inventory playerInventory, Player player) {
-        super(ModContent.SCANNER_MENU.get(), windowId);
-        scanner = level.getBlockEntity(pos) instanceof ScannerBlockEntity scanner ? scanner : null;
+    public EncoderMenu(int windowId, Level world, BlockPos pos, Inventory playerInventory, Player player) {
+        super(ModContent.ENCODER_MENU.get(), windowId);
+        encoder = world.getBlockEntity(pos) instanceof EncoderBlockEntity encoder ? encoder : null;
         this.playerInventory = new InvWrapper(playerInventory);
 
         addPlayerSlots(this.playerInventory);
@@ -29,12 +30,11 @@ public class ScannerMenu extends AbstractContainerMenu {
 
     @Override
     public boolean stillValid(Player player) {
-        Level level = scanner.getLevel();
-        BlockPos pos = scanner.getBlockPos();
+        Level level = encoder.getLevel();
+        BlockPos pos = encoder.getBlockPos();
 
-        return !level.getBlockState(pos).is(ModContent.SCANNER_BLOCK.get()) ? false : player.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) <= 64.0D;
+        return !level.getBlockState(pos).is(ModContent.ENCODER_BLOCK.get()) ? false : player.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) <= 64.0D;
     }
-
 
     private void addPlayerSlots(IItemHandler itemHandler) {
         // Slots for the main inventory
@@ -54,24 +54,27 @@ public class ScannerMenu extends AbstractContainerMenu {
     }
 
     private void addCustomSlots() {
-        addSlot(new SlotItemHandler(scanner.getItemHandler(), 1, 80, 37));
+        addSlot(new SlotItemHandler(encoder.getItemHandler(), 1, 90, 38));
     }
 
+    /**
+     * This is actually needed in order to achieve shift click functionality in the GUI. If this method isn't overridden, the game crashes.
+     */
     @Override
     public ItemStack quickMoveStack(Player player, int index) {
         ItemStack itemStack = ItemStack.EMPTY;
         Slot slot = this.slots.get(index);
 
-        if (slot != null && slot.hasItem()) {
+        if (slot != null && slot.hasItem() && slot.getItem().getItem() instanceof ThumbdriveItem) {
             ItemStack slotStack = slot.getItem();
             itemStack = slotStack.copy();
 
-            if (index == 36) {
+            if (index == 36) { //originating slot is custom slot
                 if (!this.moveItemStackTo(slotStack, 0, 36, true)) {
-                    return ItemStack.EMPTY;
+                    return ItemStack.EMPTY; // Inventory is full, can't transfer item!
                 }
-            } else if (!this.moveItemStackTo(slotStack, 36, 37, false)) {
-                return ItemStack.EMPTY;
+            } else if (!this.moveItemStackTo(slotStack, 36, 37, false)) { //move from inv to custom slot
+                return ItemStack.EMPTY; // custom slot is full, can't transfer item!
             }
 
             if (slotStack.isEmpty()) {

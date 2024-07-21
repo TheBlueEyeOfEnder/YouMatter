@@ -12,7 +12,7 @@ import realmayus.youmatter.YouMatter;
 import java.util.Arrays;
 import java.util.List;
 
-public class ScannerScreen extends AbstractContainerScreen<ScannerMenu> {
+    public class ScannerScreen extends AbstractContainerScreen<ScannerMenu> {
     private static final int WIDTH = 176;
     private static final int HEIGHT = 168;
 

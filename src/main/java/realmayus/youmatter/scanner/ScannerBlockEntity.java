@@ -20,6 +20,8 @@ import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import realmayus.youmatter.ModContent;
 import realmayus.youmatter.YMConfig;
+import realmayus.youmatter.encoder.EncoderBlock;
+import realmayus.youmatter.encoder.EncoderBlockEntity;
 import realmayus.youmatter.util.MyEnergyStorage;
 import realmayus.youmatter.util.RegistryUtil;
 

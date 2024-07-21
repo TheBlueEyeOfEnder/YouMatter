@@ -2,13 +2,21 @@ package realmayus.youmatter;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.world.Container;
 import net.minecraft.world.item.*;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.capabilities.Capabilities;
+import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
+import net.neoforged.neoforge.client.event.RegisterMenuScreensEvent;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import realmayus.youmatter.encoder.EncoderScreen;
+import realmayus.youmatter.scanner.ScannerScreen;
 
 import java.util.List;
 
@@ -39,20 +47,20 @@ public class YouMatter {
                         new ItemStack(ModContent.STABILIZER_BUCKET.get()))); */
             }).build());
 
-    public YouMatter(IEventBus modEventBus) {
-       // ModLoadingContext.get().registerConfig(ModConfig.Type.COMMON, YMConfig.CONFIG_SPEC);
+    public YouMatter(IEventBus modEventBus, ModContainer container) {
+        container.registerConfig(ModConfig.Type.COMMON, YMConfig.CONFIG_SPEC);
         ModContent.init(modEventBus);
         CREATIVE_MODE_TABS.register(modEventBus);
-     /*   modEventBus.addListener(this::registerCapabilities);
+        modEventBus.addListener(this::registerCapabilities);
         modEventBus.addListener(this::registerScreens);
-        modEventBus.addListener(this::registerPayloads); */
+       // modEventBus.addListener(this::registerPayloads);
     }
 
-   /* private void registerScreens(RegisterMenuScreensEvent event) {
+    private void registerScreens(RegisterMenuScreensEvent event) {
         event.register(ModContent.SCANNER_MENU.get(), ScannerScreen::new);
         event.register(ModContent.ENCODER_MENU.get(), EncoderScreen::new);
-        event.register(ModContent.REPLICATOR_MENU.get(), ReplicatorScreen::new);
-        event.register(ModContent.CREATOR_MENU.get(), CreatorScreen::new);
+        /* event.register(ModContent.REPLICATOR_MENU.get(), ReplicatorScreen::new);
+        event.register(ModContent.CREATOR_MENU.get(), CreatorScreen::new); */
     }
 
     private void registerCapabilities(RegisterCapabilitiesEvent event) {
@@ -60,7 +68,7 @@ public class YouMatter {
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ModContent.SCANNER_BLOCK_ENTITY.get(), (o, direction) -> o.getEnergyHandler());
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ModContent.ENCODER_BLOCK_ENTITY.get(), (o, direction) -> o.getItemHandler());
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ModContent.ENCODER_BLOCK_ENTITY.get(), (o, direction) -> o.getEnergyHandler());
-        event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ModContent.REPLICATOR_BLOCK_ENTITY.get(), (o, direction) -> o.getItemHandler());
+       /* event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ModContent.REPLICATOR_BLOCK_ENTITY.get(), (o, direction) -> o.getItemHandler());
         event.registerBlockEntity(Capabilities.EnergyStorage.BLOCK, ModContent.REPLICATOR_BLOCK_ENTITY.get(), (o, direction) -> o.getEnergyHandler());
         event.registerBlockEntity(Capabilities.FluidHandler.BLOCK, ModContent.REPLICATOR_BLOCK_ENTITY.get(), (o, direction) -> o.getFluidHandler());
         event.registerBlockEntity(Capabilities.ItemHandler.BLOCK, ModContent.CREATOR_BLOCK_ENTITY.get(), (o, direction) -> o.getItemHandler());
@@ -80,4 +88,5 @@ public class YouMatter {
         registrar.play(PacketShowPrevious.ID, PacketShowPrevious::new, handler ->
                handler.server(PacketHandler.ShowPrevious.getInstance()::handle));
     } */
+    }
 }

@@ -46,9 +46,6 @@ public class ScannerBlock extends BaseEntityBlock {
         return createTickerHelper(type, ModContent.SCANNER_BLOCK_ENTITY.get(), ScannerBlockEntity::tick);
     }
 
-    /**
-     * EVENT that is called when you right-click the block,
-     */
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide) {

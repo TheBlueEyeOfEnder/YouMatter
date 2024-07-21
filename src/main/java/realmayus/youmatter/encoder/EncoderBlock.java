@@ -14,6 +14,7 @@ import net.minecraft.world.level.block.entity.BlockEntityTicker;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.BlockHitResult;
+import realmayus.youmatter.ModContent;
 
 import javax.annotation.Nullable;
 
@@ -44,9 +45,6 @@ public class EncoderBlock extends BaseEntityBlock {
         return createTickerHelper(type, ModContent.ENCODER_BLOCK_ENTITY.get(), EncoderBlockEntity::tick);
     }
 
-    /**
-     * EVENT that is called when you right-click the block,
-     */
     @Override
     public InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (level.isClientSide) {

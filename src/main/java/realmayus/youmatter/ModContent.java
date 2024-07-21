@@ -19,6 +19,9 @@ import net.neoforged.neoforge.fluids.FluidType;
 import net.neoforged.neoforge.registries.DeferredHolder;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import net.neoforged.neoforge.registries.NeoForgeRegistries;
+import realmayus.youmatter.encoder.EncoderBlock;
+import realmayus.youmatter.encoder.EncoderBlockEntity;
+import realmayus.youmatter.encoder.EncoderMenu;
 import realmayus.youmatter.items.BlackHoleItem;
 import realmayus.youmatter.items.ComputeModuleItem;
 import realmayus.youmatter.items.MachineCasingItem;
@@ -57,12 +60,12 @@ public class ModContent {
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<ScannerBlockEntity>> SCANNER_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register("scanner", () -> BlockEntityType.Builder.of(ScannerBlockEntity::new, SCANNER_BLOCK.get()).build(null));
     public static final DeferredHolder<Item, BlockItem> SCANNER_BLOCK_ITEM = ITEMS.register("scanner", () -> new BlockItem(SCANNER_BLOCK.get(), new Item.Properties()));
 
-/*    public static final DeferredHolder<Block, EncoderBlock> ENCODER_BLOCK = BLOCKS.register("encoder", EncoderBlock::new);
+    public static final DeferredHolder<Block, EncoderBlock> ENCODER_BLOCK = BLOCKS.register("encoder", EncoderBlock::new);
     public static final DeferredHolder<MenuType<?>, MenuType<EncoderMenu>> ENCODER_MENU = MENU_TYPES.register("encoder", () -> IMenuTypeExtension.create((windowId, inv, data) -> new EncoderMenu(windowId, inv.player.level(), data.readBlockPos(), inv, inv.player)));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<EncoderBlockEntity>> ENCODER_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register("encoder", () -> BlockEntityType.Builder.of(EncoderBlockEntity::new, ENCODER_BLOCK.get()).build(null));
     public static final DeferredHolder<Item, BlockItem> ENCODER_BLOCK_ITEM = ITEMS.register("encoder", () -> new BlockItem(ENCODER_BLOCK.get(), new Item.Properties()));
 
-    public static final DeferredHolder<Block, CreatorBlock> CREATOR_BLOCK = BLOCKS.register("creator", CreatorBlock::new);
+   /*  public static final DeferredHolder<Block, CreatorBlock> CREATOR_BLOCK = BLOCKS.register("creator", CreatorBlock::new);
     public static final DeferredHolder<MenuType<?>, MenuType<CreatorMenu>> CREATOR_MENU = MENU_TYPES.register("creator", () -> IMenuTypeExtension.create((windowId, inv, data) -> new CreatorMenu(windowId, inv.player.level(), data.readBlockPos(), inv, inv.player)));
     public static final DeferredHolder<BlockEntityType<?>, BlockEntityType<CreatorBlockEntity>> CREATOR_BLOCK_ENTITY = BLOCK_ENTITY_TYPES.register("creator", () -> BlockEntityType.Builder.of(CreatorBlockEntity::new, CREATOR_BLOCK.get()).build(null));
     public static final DeferredHolder<Item, BlockItem> CREATOR_BLOCK_ITEM = ITEMS.register("creator", () -> new BlockItem(CREATOR_BLOCK.get(), new Item.Properties()));

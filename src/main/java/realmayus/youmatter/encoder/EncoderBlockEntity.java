@@ -1,6 +1,9 @@
+package realmayus.youmatter.encoder;
+
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.Tag;
@@ -12,7 +15,6 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.ItemLike;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -30,7 +32,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
 
@@ -49,12 +50,9 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
 
 
     // Calling this method signals incoming data from a neighboring scanner
-    public void ignite(Set<Item> items) {
-        if (items != null) {
-            List<ItemStack> itemStacks = items.stream()
-                    .map(item -> new ItemStack(item))
-                    .collect(Collectors.toList());
-            queue.addAll(itemStacks);
+    public void ignite(ItemStack itemStack) {
+        if(itemStack != ItemStack.EMPTY && itemStack != null) {
+            queue.add(itemStack);
             setChanged();
         }
     }
@@ -95,8 +93,8 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
                 List<ItemStack> queueBuilder = new ArrayList<>();
                 for(Tag base: compound.getList("queue", Tag.TAG_COMPOUND)) {
                     if (base instanceof CompoundTag nbtTagCompound) {
-                        if(!ItemStack.of(nbtTagCompound).isEmpty()) {
-                            queueBuilder.add(ItemStack.of(nbtTagCompound));
+                        if(!ItemStack.parseOptional(provider, nbtTagCompound).isEmpty()) {
+                            queueBuilder.add(ItemStack.parseOptional(provider, nbtTagCompound));
                         }
                     }
                 }
@@ -116,7 +114,7 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
         ListTag tempCompoundList = new ListTag();
         for (ItemStack is : queue) {
             if (!is.isEmpty()) {
-                tempCompoundList.add(is.save(provider, new CompoundTag()));
+                tempCompoundList.add(is.save(provider));
             }
         }
         compound.put("queue", tempCompoundList);
