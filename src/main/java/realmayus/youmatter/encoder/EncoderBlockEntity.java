@@ -168,7 +168,7 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
                                     }
                                 }
                             } else {
-                                ItemContainerContents itemsStored = inventory.get().getStackInSlot(1).get(ModContent.ITEMS_STORED_DATA.get());
+                                ItemContainerContents itemsStored = inventory.get().getStackInSlot(1).getOrDefault(ModContent.ITEMS_STORED_DATA.get(), ItemContainerContents.EMPTY);
                                 if (itemsStored != null) {
                                     if (itemsStored.getSlots() < 8) {
                                         inventory.get().getStackInSlot(1).set(ModContent.ITEMS_STORED_DATA.get(), ItemContainerContents.fromItems(Collections.singletonList(processIS.copy())));

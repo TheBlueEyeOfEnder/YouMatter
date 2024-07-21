@@ -16,13 +16,6 @@ public class ThumbdriveItem extends Item {
     }
 
     @Override
-    public void verifyComponentsAfterLoad(ItemStack stack) {
-        if (stack.get(ModContent.ITEMS_STORED_DATA.get()) == null) {
-            stack.set(ModContent.ITEMS_STORED_DATA.get(), null);
-        }
-    }
-
-    @Override
     public void appendHoverText(ItemStack stack, Item.TooltipContext context, List<Component> tooltip, TooltipFlag flag) {
         ItemContainerContents itemsStored = stack.get(ModContent.ITEMS_STORED_DATA.get());
         if (itemsStored != null)
