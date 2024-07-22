@@ -10,6 +10,7 @@ import net.minecraft.world.item.BucketItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.material.Fluid;
 import net.neoforged.neoforge.capabilities.Capabilities;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 import net.neoforged.neoforge.items.IItemHandler;
@@ -85,10 +86,12 @@ public class CreatorMenu extends AbstractContainerMenu {
                 }
             } else {
                 if(slotStack.getItem() instanceof BucketItem bucket) {
-                    if (bucket.getFluid().is(Tags.Fluids.STABILIZER)) {
-                        if(!this.moveItemStackTo(slotStack, 36, 37, false)) {
+                    if (bucket.getFluid().isSame(creator.getSTank().getFluidInTank(0).getFluid()) || creator.getSTank().isEmpty()) {
+                        if (bucket.getFluid().is(Tags.Fluids.STABILIZER)) {
+                            if (!this.moveItemStackTo(slotStack, 36, 37, false)) {
                             return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                         }
+                    }
                     } else if(bucket == Items.BUCKET) {
                         if(!this.moveItemStackTo(slotStack, 38, 39, false)) {
                             return ItemStack.EMPTY; // custom slot is full, can't transfer item!
@@ -106,12 +109,16 @@ public class CreatorMenu extends AbstractContainerMenu {
                                 if(!this.moveItemStackTo(slotStack, 38, 39, false)) {
                                     return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                                 }
-                            } else if (h.getFluidInTank(0).getFluid().is(Tags.Fluids.STABILIZER)) {
-                                if(!this.moveItemStackTo(slotStack, 36, 37, false)) {
-                                    return ItemStack.EMPTY; // custom slot is full, can't transfer item!
-                                }
                             } else {
-                                return ItemStack.EMPTY;
+                                if(h.getFluidInTank(0).getFluid().isSame(creator.getSTank().getFluidInTank(0).getFluid()) || creator.getSTank().isEmpty()) {
+                                    if (h.getFluidInTank(0).getFluid().is(Tags.Fluids.STABILIZER)) {
+                                        if (!this.moveItemStackTo(slotStack, 36, 37, false)) {
+                                            return ItemStack.EMPTY; // custom slot is full, can't transfer item!
+                                        }
+                                    }
+                                } else {
+                                    return ItemStack.EMPTY;
+                                }
                             }
                             return ItemStack.EMPTY;
                     }

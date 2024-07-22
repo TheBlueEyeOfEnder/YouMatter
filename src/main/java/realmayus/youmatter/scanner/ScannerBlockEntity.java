@@ -2,7 +2,6 @@ package realmayus.youmatter.scanner;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
@@ -15,7 +14,6 @@ import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.neoforged.neoforge.capabilities.Capabilities;
-import net.neoforged.neoforge.common.util.Lazy;
 import net.neoforged.neoforge.energy.IEnergyStorage;
 import net.neoforged.neoforge.items.ItemStackHandler;
 import realmayus.youmatter.ModContent;
@@ -45,12 +43,12 @@ public class ScannerBlockEntity extends BlockEntity implements MenuProvider {
         setChanged();
     }
 
-    public Lazy<ItemStackHandler> inventory = Lazy.of(() -> new ItemStackHandler(5) {
+    public ItemStackHandler inventory = new ItemStackHandler(5) {
         @Override
         protected void onContentsChanged(int slot) {
             ScannerBlockEntity.this.setChanged();
         }
-    });
+    };
 
     private int progress = 0;
 
@@ -64,14 +62,14 @@ public class ScannerBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public int getEnergy() {
-        return myEnergyStorage.get().getEnergyStored();
+        return myEnergyStorage.getEnergyStored();
     }
 
     public void setEnergy(int energy) {
-        myEnergyStorage.get().setEnergy(energy);
+        myEnergyStorage.setEnergy(energy);
     }
 
-    private final Lazy<MyEnergyStorage> myEnergyStorage = Lazy.of(() -> new MyEnergyStorage(this, 1000000, Integer.MAX_VALUE));
+    private final MyEnergyStorage myEnergyStorage = new MyEnergyStorage(this, 1000000, Integer.MAX_VALUE);
 
     @Override
     public void load(CompoundTag compound) {
@@ -83,7 +81,7 @@ public class ScannerBlockEntity extends BlockEntity implements MenuProvider {
             setEnergy(compound.getInt("energy"));
         }
         if(compound.contains("inventory")) {
-            inventory.get().deserializeNBT((CompoundTag) compound.get("inventory"));
+            inventory.deserializeNBT((CompoundTag) compound.get("inventory"));
         }
 
         setHasEncoder(compound.getBoolean("encoder"));
@@ -96,7 +94,7 @@ public class ScannerBlockEntity extends BlockEntity implements MenuProvider {
         compound.putInt("energy", getEnergy());
         compound.putBoolean("encoder", getHasEncoder());
         if (inventory != null) {
-            compound.put("inventory", inventory.get().serializeNBT());
+            compound.put("inventory", inventory.serializeNBT());
         }
     }
 
@@ -117,54 +115,60 @@ public class ScannerBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public void tick(Level level, BlockPos pos, BlockState state) {
-        if (currentPartTick >= 2) {
-            BlockPos encoderPos = getNeighborEncoder(this.worldPosition);
+        if (currentPartTick < 2) {
+            currentPartTick++;
+            return;
+        }
 
-            if (encoderPos != null) {
-                if (!hasEncoder) {
-                    setChanged();
-                    level.sendBlockUpdated(pos, state, state, 3);
-                }
+        BlockPos encoderPos = getNeighborEncoder(this.worldPosition);
+        if (encoderPos == null) {
+            return;
+        }
 
-                hasEncoder = true;
-                if (inventory != null) {
-                    if (!inventory.get().getStackInSlot(1).isEmpty() && isItemAllowed(inventory.get().getStackInSlot(1))) {
-                        for (Direction direction : Direction.values()) {
-                            if (myEnergyStorage.get().getEnergyStored() <= 0) {
-                                return;
-                            }
-                            IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
-                            if (getEnergy() > YMConfig.CONFIG.energyScanner.get()) {
-                                if (getProgress() < 100) {
-                                    setProgress(getProgress() + 1);
-                                    if (energyStorage != null) {
-                                        myEnergyStorage.get().extractEnergy(YMConfig.CONFIG.energyScanner.get(), false);
-                                    }
-                                } else {
-                                    // Notifying the neighboring encoder of this scanner having finished its operation
-                                    ((EncoderBlockEntity) level.getBlockEntity(encoderPos)).ignite(inventory.get().getStackInSlot(1)); //don't worry, this is already checked by getNeighborEncoder() c:
-                                    inventory.get().setStackInSlot(1, ItemStack.EMPTY);
-                                    setProgress(0);
-                                }
-                            }
-                        }
-                    }
-                    } else if (getProgress() != 0) {
-                        setProgress(0); // if item was suddenly removed, reset progress to 0
+        if (!hasEncoder) {
+            setChanged();
+            level.sendBlockUpdated(pos, state, state, 3);
+        }
+
+        hasEncoder = true;
+        if (inventory == null) {
+            if (hasEncoder) {
+                setChanged();
+                level.sendBlockUpdated(pos, state, state, 3);
+            }
+            hasEncoder = false;
+            return;
+        }
+
+        ItemStack stackInSlot = inventory.getStackInSlot(1);
+        if (stackInSlot.isEmpty() || !isItemAllowed(stackInSlot)) {
+            if (getProgress() != 0) {
+                setProgress(0); // if item was suddenly removed, reset progress to 0
+            }
+            return;
+        }
+
+        for (Direction direction : Direction.values()) {
+            if (myEnergyStorage.getEnergyStored() <= 0) {
+                return;
+            }
+            IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
+            if (getEnergy() > YMConfig.CONFIG.energyScanner.get()) {
+                if (getProgress() < 100) {
+                    setProgress(getProgress() + 1);
+                    if (energyStorage != null) {
+                        myEnergyStorage.extractEnergy(YMConfig.CONFIG.energyScanner.get(), false);
                     }
                 } else {
-                    if (hasEncoder) {
-                        setChanged();
-                        level.sendBlockUpdated(pos, state, state, 3);
-                    }
-
-                    hasEncoder = false;
+                    // Notifying the neighboring encoder of this scanner having finished its operation
+                    ((EncoderBlockEntity) level.getBlockEntity(encoderPos)).ignite(stackInSlot); //don't worry, this is already checked by getNeighborEncoder() c:
+                    inventory.setStackInSlot(1, ItemStack.EMPTY);
+                    setProgress(0);
                 }
-                currentPartTick = 0;
-            } else {
-                currentPartTick++;
             }
         }
+        currentPartTick = 0;
+    }
 
 
     private boolean isItemAllowed(ItemStack itemStack) {
@@ -210,10 +214,10 @@ public class ScannerBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public ItemStackHandler getItemHandler() {
-        return inventory.get();
+        return inventory;
     }
 
     public IEnergyStorage getEnergyHandler() {
-        return myEnergyStorage.get();
+        return myEnergyStorage;
     }
 }

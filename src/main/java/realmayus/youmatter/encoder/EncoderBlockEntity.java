@@ -8,6 +8,7 @@ import net.minecraft.nbt.StringTag;
 import net.minecraft.nbt.Tag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.MenuProvider;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -29,6 +30,7 @@ import realmayus.youmatter.util.RegistryUtil;
 import javax.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
 
@@ -38,12 +40,12 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
         super(ModContent.ENCODER_BLOCK_ENTITY.get(), pos, state);
     }
 
-    public Lazy<ItemStackHandler> inventory = Lazy.of(() -> new ItemStackHandler(5) {
+    public ItemStackHandler inventory = new ItemStackHandler(5) {
         @Override
         protected void onContentsChanged(int slot) {
             EncoderBlockEntity.this.setChanged();
         }
-    });
+    };
 
 
     // Calling this method signals incoming data from a neighboring scanner
@@ -67,37 +69,34 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public int getEnergy() {
-        return myEnergyStorage.get().getEnergyStored();
+        return myEnergyStorage.getEnergyStored();
     }
 
     public void setEnergy(int energy) {
-        myEnergyStorage.get().setEnergy(energy);
+        myEnergyStorage.setEnergy(energy);
     }
 
-    private Lazy<MyEnergyStorage> myEnergyStorage = Lazy.of(() -> new MyEnergyStorage(this, 1000000, Integer.MAX_VALUE));
+    private MyEnergyStorage myEnergyStorage = new MyEnergyStorage(this, 1000000, Integer.MAX_VALUE);
 
     @Override
     public void load(CompoundTag compound) {
         super.load(compound);
         setProgress(compound.getInt("progress"));
         setEnergy(compound.getInt("energy"));
+
         if(compound.contains("inventory")) {
-            inventory.get().deserializeNBT((CompoundTag) compound.get("inventory"));
+            inventory.deserializeNBT((CompoundTag) compound.get("inventory"));
         }
-        if(compound.contains("queue")) {
-            if (compound.get("queue") instanceof ListTag) {
-                List<ItemStack> queueBuilder = new ArrayList<>();
-                for(Tag base: compound.getList("queue", Tag.TAG_COMPOUND)) {
-                    if (base instanceof CompoundTag nbtTagCompound) {
-                        if(!ItemStack.of(nbtTagCompound).isEmpty()) {
-                            queueBuilder.add(ItemStack.of(nbtTagCompound));
-                        }
-                    }
-                }
-                queue = queueBuilder;
-            }
+
+        if(compound.contains("queue") && compound.get("queue") instanceof ListTag) {
+            queue = compound.getList("queue", Tag.TAG_COMPOUND).stream()
+                    .filter(base -> base instanceof CompoundTag)
+                    .map(base -> ItemStack.of((CompoundTag) base))
+                    .filter(stack -> !stack.isEmpty())
+                    .collect(Collectors.toList());
         }
     }
+
 
     @Override
     public void saveAdditional(CompoundTag compound) {
@@ -105,7 +104,7 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
         compound.putInt("progress", getProgress());
         compound.putInt("energy", getEnergy());
         if (inventory != null) {
-            compound.put("inventory", inventory.get().serializeNBT());
+            compound.put("inventory", inventory.serializeNBT());
         }
         ListTag tempCompoundList = new ListTag();
         for (ItemStack is : queue) {
@@ -137,63 +136,60 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public void tick(Level level, BlockPos pos, BlockState state) {
-            if (!queue.isEmpty()) {
-                ItemStack processIS = queue.get(queue.size() - 1);
-                if (processIS != ItemStack.EMPTY) {
-                    if (inventory != null) {
-                        if (inventory.get().getStackInSlot(1).getItem() instanceof ThumbdriveItem) {
-                            if (myEnergyStorage.get().getEnergyStored() <= 0) {
-                                return;
-                            }
-                            for (Direction direction : Direction.values()) {
-                            IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
-                            if (progress < 100) {
-                                if (getEnergy() >= YMConfig.CONFIG.energyEncoder.get()) {
-                                    CompoundTag nbt = inventory.get().getStackInSlot(1).getTag();
-                                    if (nbt != null) {
-                                        if (nbt.contains("stored_items")) {
-                                            ListTag list = nbt.getList("stored_items", Tag.TAG_STRING);
-                                            if (list.size() < 8) {
-                                                if (energyStorage != null) {
-                                                    progress = progress + 1;
-                                                    myEnergyStorage.get().extractEnergy(YMConfig.CONFIG.energyEncoder.get(), false);
-                                                }
-                                            }
-                                        }
-                                    } else {
-                                        if (energyStorage != null) {
-                                        progress = progress + 1; //doesn't have data stored yet
-                                        myEnergyStorage.get().extractEnergy(YMConfig.CONFIG.energyEncoder.get(), false);
-                                        }
-                                    }
-                                }
-                            } else {
-                                CompoundTag nbt = inventory.get().getStackInSlot(1).getTag();
-                                if (nbt != null) {
-                                    if (nbt.contains("stored_items")) {
-                                        ListTag list = nbt.getList("stored_items", Tag.TAG_STRING);
-                                        if (list.size() < 8) {
-                                            list.add(StringTag.valueOf(RegistryUtil.getRegistryName(processIS.getItem()) + ""));
-                                            nbt.put("stored_items", list);
-                                        }
-                                    } else {
-                                        ListTag list = new ListTag();
-                                        list.add(StringTag.valueOf(RegistryUtil.getRegistryName(processIS.getItem()) + ""));
-                                        nbt.put("stored_items", list);
-                                    }
-                                } else {
-                                    nbt = new CompoundTag();
-                                    ListTag list = new ListTag();
-                                    list.add(StringTag.valueOf(RegistryUtil.getRegistryName(processIS.getItem()) + ""));
-                                    nbt.put("stored_items", list);
-                                    inventory.get().getStackInSlot(1).setTag(nbt);
-                                }
-                                queue.remove(processIS);
-                                progress = 0;
-                            }
-                        }
-                    }
+        if (queue.isEmpty() || inventory == null || myEnergyStorage.getEnergyStored() <= 0) {
+            return;
+        }
+
+        ItemStack processIS = queue.get(queue.size() - 1);
+        if (processIS == ItemStack.EMPTY) {
+            return;
+        }
+
+        if (!(inventory.getStackInSlot(1).getItem() instanceof ThumbdriveItem)) {
+            return;
+        }
+
+        for (Direction direction : Direction.values()) {
+            IEnergyStorage energyStorage = level.getCapability(Capabilities.EnergyStorage.BLOCK, getBlockPos().relative(direction), null);
+            if (energyStorage == null) {
+                continue;
+            }
+
+            CompoundTag nbt = inventory.getStackInSlot(1).getTag();
+            if (nbt == null) {
+                nbt = new CompoundTag();
+            }
+
+            ListTag list = nbt.getList("stored_items", Tag.TAG_STRING);
+            if (list == null) {
+                list = new ListTag();
+            }
+
+            // Check if the item is already encoded on the thumb drive
+            String itemRegistryName = RegistryUtil.getRegistryName(processIS.getItem()) + "";
+            boolean isItemAlreadyEncoded = false;
+            for (int i = 0; i < list.size(); i++) {
+                if (list.getString(i).equals(itemRegistryName)) {
+                    isItemAlreadyEncoded = true;
+                    break;
                 }
+            }
+
+            if (isItemAlreadyEncoded) {
+                // If the item is already encoded, remove it from the queue and return
+                queue.remove(processIS);
+                return;
+            }
+
+            if (progress < 100 && getEnergy() >= YMConfig.CONFIG.energyEncoder.get() && list.size() < 8) {
+                progress++;
+                myEnergyStorage.extractEnergy(YMConfig.CONFIG.energyEncoder.get(), false);
+            } else if (progress >= 100) {
+                list.add(StringTag.valueOf(itemRegistryName));
+                nbt.put("stored_items", list);
+                inventory.getStackInSlot(1).setTag(nbt);
+                queue.remove(processIS);
+                progress = 0;
             }
         }
     }
@@ -210,11 +206,11 @@ public class EncoderBlockEntity extends BlockEntity implements MenuProvider {
     }
 
     public ItemStackHandler getItemHandler() {
-        return inventory.get();
+        return inventory;
     }
 
     public IEnergyStorage getEnergyHandler() {
-        return myEnergyStorage.get();
+        return myEnergyStorage;
     }
 }
 

@@ -47,7 +47,7 @@ public class EncoderScreen extends AbstractContainerScreen<EncoderMenu> {
         }
         if (xAxis >= 16 && xAxis <= 32 && yAxis >= 59 && yAxis <= 75) {
             if (encoder.inventory != null) {
-                ItemStackHandler inventory = encoder.inventory.get();
+                ItemStackHandler inventory = encoder.inventory;
                 if (inventory.getStackInSlot(1).getItem() instanceof ThumbdriveItem) {
                     CompoundTag nbt = inventory.getStackInSlot(1).getTag();
                     if (nbt != null) {
@@ -78,10 +78,10 @@ public class EncoderScreen extends AbstractContainerScreen<EncoderMenu> {
         drawProgressDisplayChain(guiGraphics, encoder.getProgress());
 
         if(encoder.inventory != null) {
-            if (!(encoder.inventory.get().getStackInSlot(1).getItem() instanceof ThumbdriveItem)) {
+            if (!(encoder.inventory.getStackInSlot(1).getItem() instanceof ThumbdriveItem)) {
                 guiGraphics.blit(GUI, 16, 59, 176, 66, 16, 16);
             } else {
-                CompoundTag nbt = encoder.inventory.get().getStackInSlot(1).getTag();
+                CompoundTag nbt = encoder.inventory.getStackInSlot(1).getTag();
                 if (nbt != null) {
                     ListTag list = nbt.getList("stored_items", Tag.TAG_STRING);
                     if (list.size() >= 8) {

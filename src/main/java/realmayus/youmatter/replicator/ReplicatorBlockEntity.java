@@ -201,22 +201,26 @@ public class ReplicatorBlockEntity extends BlockEntity implements MenuProvider {
                     if (item.getItem() instanceof BucketItem && GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(4), new ItemStack(Items.BUCKET, 1), false)) {
                         IFluidHandlerItem h = item.getCapability(Capabilities.FluidHandler.ITEM);
                         if (h != null) {
-                            if (!h.getFluidInTank(0).isEmpty() && h.getFluidInTank(0).getFluid().is(Tags.Fluids.MATTER)) {
-                                if (MAX_UMATTER - getTank().getFluidAmount() >= 1000) {
-                                    getTank().fill(new FluidStack(h.getFluidInTank(0).getFluid(), 1000), IFluidHandler.FluidAction.EXECUTE);
-                                    inventory.get().setStackInSlot(3, ItemStack.EMPTY);
-                                    inventory.get().insertItem(4, new ItemStack(Items.BUCKET, 1), false);
+                            if (h.getFluidInTank(0).getFluid().isSame(getTank().getFluidInTank(0).getFluid()) || getTank().isEmpty()) {
+                                if (!h.getFluidInTank(0).isEmpty() && h.getFluidInTank(0).getFluid().is(Tags.Fluids.MATTER)) {
+                                    if (MAX_UMATTER - getTank().getFluidAmount() >= 1000) {
+                                        getTank().fill(new FluidStack(h.getFluidInTank(0).getFluid(), 1000), IFluidHandler.FluidAction.EXECUTE);
+                                        inventory.get().setStackInSlot(3, ItemStack.EMPTY);
+                                        inventory.get().insertItem(4, new ItemStack(Items.BUCKET, 1), false);
+                                    }
                                 }
                             }
                         }
                     } else if (GeneralUtils.canAddItemToSlot(inventory.get().getStackInSlot(4), inventory.get().getStackInSlot(3), false)) {
                         IFluidHandlerItem h = item.getCapability(Capabilities.FluidHandler.ITEM);
                         if (h != null) {
-                            if (h.getFluidInTank(0).getFluid().is(Tags.Fluids.MATTER)) {
-                                if (h.getFluidInTank(0).getAmount() > MAX_UMATTER - getTank().getFluidAmount()) { //given fluid is more than what fits in the U-Tank
-                                    getTank().fill(h.drain(MAX_UMATTER - getTank().getFluidAmount(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
-                                } else { //given fluid fits perfectly in U-Tank
-                                    getTank().fill(h.drain(h.getFluidInTank(0).getAmount(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                            if (h.getFluidInTank(0).getFluid().isSame(getTank().getFluidInTank(0).getFluid()) || getTank().isEmpty()) {
+                                if (h.getFluidInTank(0).getFluid().is(Tags.Fluids.MATTER)) {
+                                    if (h.getFluidInTank(0).getAmount() > MAX_UMATTER - getTank().getFluidAmount()) { //given fluid is more than what fits in the U-Tank
+                                        getTank().fill(h.drain(MAX_UMATTER - getTank().getFluidAmount(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                                    } else { //given fluid fits perfectly in U-Tank
+                                        getTank().fill(h.drain(h.getFluidInTank(0).getAmount(), IFluidHandler.FluidAction.EXECUTE), IFluidHandler.FluidAction.EXECUTE);
+                                    }
                                 }
                             }
                         }

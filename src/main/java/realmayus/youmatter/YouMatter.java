@@ -35,7 +35,7 @@ public class YouMatter {
     public static final DeferredRegister<CreativeModeTab> CREATIVE_MODE_TABS = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MODID);
     public static final DeferredHolder<CreativeModeTab, CreativeModeTab> TAB = CREATIVE_MODE_TABS.register("tab", () -> CreativeModeTab.builder()
             .withTabsBefore(CreativeModeTabs.SPAWN_EGGS)
-            .icon(() -> new ItemStack(ModContent.SCANNER_BLOCK.get()))
+            .icon(() -> new ItemStack(ModContent.UMATTER_BUCKET.get()))
             .title(Component.literal("YouMatter")) //todo localize
             .displayItems((displayParameters, output) -> {
                 output.acceptAll(List.of(

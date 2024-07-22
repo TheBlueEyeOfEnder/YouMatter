@@ -13,7 +13,6 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 import net.neoforged.neoforge.items.IItemHandler;
 import net.neoforged.neoforge.items.SlotItemHandler;
 import net.neoforged.neoforge.items.wrapper.InvWrapper;
-import org.jetbrains.annotations.NotNull;
 import realmayus.youmatter.ModContent;
 import realmayus.youmatter.items.ThumbdriveItem;
 import realmayus.youmatter.util.DisplaySlot;
@@ -40,7 +39,6 @@ public class ReplicatorMenu extends AbstractContainerMenu {
 
         return !level.getBlockState(pos).is(ModContent.REPLICATOR_BLOCK.get()) ? false : player.distanceToSqr(pos.getX() + 0.5D, pos.getY() + 0.5D, pos.getZ() + 0.5D) <= 64.0D;
     }
-
 
     private void addPlayerSlots(IItemHandler itemHandler) {
         // Slots for the main inventory
@@ -82,25 +80,29 @@ public class ReplicatorMenu extends AbstractContainerMenu {
                 }
             } else {
                 if (slotStack.getItem() instanceof ThumbdriveItem) {
-                    if(!this.moveItemStackTo(slotStack, 36, 37, false)) {
+                    if (!this.moveItemStackTo(slotStack, 36, 37, false)) {
                         return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                     }
-                } else if(slotStack.getItem() instanceof BucketItem bucket) {
-                    if(bucket.getFluid().is(Tags.Fluids.MATTER)) {
-                        if(!this.moveItemStackTo(slotStack, 39, 40, false)) {
-                            return ItemStack.EMPTY; // custom slot is full, can't transfer item!
+                } else if (slotStack.getItem() instanceof BucketItem bucket) {
+                    if (bucket.getFluid().isSame(replicator.getTank().getFluidInTank(0).getFluid()) || replicator.getTank().isEmpty()) {
+                        if (bucket.getFluid().is(Tags.Fluids.MATTER)) {
+                            if (!this.moveItemStackTo(slotStack, 39, 40, false)) {
+                                return ItemStack.EMPTY; // custom slot is full, can't transfer item!
+                            }
                         }
                     }
                 } else {
                     IFluidHandlerItem h = slotStack.getCapability(Capabilities.FluidHandler.ITEM);
-                    if(h != null) {
+                    if (h != null) {
+                        if (h.getFluidInTank(0).getFluid().isSame(replicator.getTank().getFluidInTank(0).getFluid()) || replicator.getTank().isEmpty()) {
                             if (h.getFluidInTank(0).getFluid().is(Tags.Fluids.MATTER)) {
-                                if(!this.moveItemStackTo(slotStack, 39, 40, false)) {
+                                if (!this.moveItemStackTo(slotStack, 39, 40, false)) {
                                     return ItemStack.EMPTY; // custom slot is full, can't transfer item!
                                 }
-                            } else {
-                                return ItemStack.EMPTY;
                             }
+                        } else {
+                            return ItemStack.EMPTY;
+                        }
                     }
                     return ItemStack.EMPTY;
                 }
