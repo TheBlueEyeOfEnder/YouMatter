@@ -3,6 +3,8 @@ package realmayus.youmatter.util;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.RecipeHolder;
 import net.minecraft.world.item.crafting.RecipeManager;
@@ -27,6 +29,29 @@ public class GeneralUtils {
         }
         return returnValue;
     }
+
+    public static int getUMatterValueRecursively(ItemStack is, RegistryAccess registryAccess, RecipeManager manager) {
+        int totalUMatterValue = 0;
+
+        // Get the recipes that match the item stack
+        List<Recipe<?>> matchingRecipes = getMatchingRecipes(registryAccess, manager, is);
+
+        // If there are no matching recipes, get the U-Matter value for the item
+        if (matchingRecipes.isEmpty()) {
+            totalUMatterValue += getUMatterAmountForItem(is.getItem());
+        } else {
+            // For each matching recipe, get the U-Matter value for each ingredient
+            for (Recipe<?> recipe : matchingRecipes) {
+                for (Ingredient ingredient : recipe.getIngredients()) {
+                    ItemStack[] stacks = ingredient.getItems();
+                    totalUMatterValue += getUMatterAmountForItem(stacks);
+                }
+            }
+        }
+
+        return totalUMatterValue;
+    }
+
 
     public static int getUMatterAmountForItem(Item item) {
         if(YMConfig.CONFIG.getOverride(RegistryUtil.getRegistryName(item).toString()) != null) {

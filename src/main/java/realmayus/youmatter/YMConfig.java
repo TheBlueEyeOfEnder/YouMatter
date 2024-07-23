@@ -14,6 +14,7 @@ public class YMConfig {
     public final ModConfigSpec.ConfigValue<List<? extends String>> filterItems;
     public final ModConfigSpec.BooleanValue filterMode;
     public final ModConfigSpec.ConfigValue<List<? extends String>> overrides;
+    public final ModConfigSpec.BooleanValue useRecursion;
     public final ModConfigSpec.ConfigValue<Integer> defaultAmount;
 
     public final ModConfigSpec.ConfigValue<Integer> energyReplicator;
@@ -34,10 +35,14 @@ public class YMConfig {
                 .define("filterMode", true);
         filterItems = builder
                 .comment("List of items that are being treated specially. See filterMode for further details. Format: \"modid:item\"")
-                .defineList("filterItems", Lists.newArrayList("youmatter:umatter_bucket", "youmatter:stabilizer_bucket"), e -> e instanceof String && ((String) e).contains(":"));
+                .defineList("filterItems", Lists.newArrayList("youmatter:umatter_bucket", "youmatter:stabilizer_bucket", "youmatter:black_hole"), e -> e instanceof String && ((String) e).contains(":"));
         overrides = builder
                 .comment("Overrides: Set your desired required U-Matter values for each item. These do not apply when you e.g. have whitelist on but it doesn't include the desired override. Format: \"modid:item=amount\"")
                 .defineList("overrides", Lists.newArrayList("minecraft:diamond=2500", "minecraft:nether_star=5000"), e -> e instanceof String && ((String) e).contains(":") && ((String) e).contains("="));
+        useRecursion = builder
+                .comment("When this option is enabled, recursively calculate the final U-Matter value for an item by summing the U-Matter values of all items in its crafting recipe.")
+                .comment("Warning: This feature is experimental!")
+                .define("useRecursion", false);
         defaultAmount = builder
                 .comment("The default amount that is required to duplicate an item if it is not overridden.")
                 .define("defaultAmount", 1000);

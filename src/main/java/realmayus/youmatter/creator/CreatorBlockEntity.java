@@ -22,6 +22,7 @@ import net.neoforged.neoforge.fluids.capability.IFluidHandler;
 import net.neoforged.neoforge.fluids.capability.IFluidHandlerItem;
 import net.neoforged.neoforge.fluids.capability.templates.FluidTank;
 import net.neoforged.neoforge.items.ItemStackHandler;
+import org.jetbrains.annotations.NotNull;
 import realmayus.youmatter.ModContent;
 import realmayus.youmatter.YMConfig;
 import realmayus.youmatter.replicator.ReplicatorBlockEntity;
@@ -38,8 +39,8 @@ public class CreatorBlockEntity extends BlockEntity implements MenuProvider {
         super(ModContent.CREATOR_BLOCK_ENTITY.get(), pos, state);
     }
 
-    private static final int MAX_UMATTER = 11000;
-    private static final int MAX_STABILIZER = 11000;
+    private static final int MAX_UMATTER = 64000;
+    private static final int MAX_STABILIZER = 64000;
 
     private boolean isActivated = true;
 
@@ -98,57 +99,45 @@ public class CreatorBlockEntity extends BlockEntity implements MenuProvider {
         @Nonnull
         @Override
         public FluidStack getFluidInTank(int tank) {
-            if (tank == 0) {
-                return uTank.getFluid();
-            } else if (tank == 1) {
-                return sTank.getFluid();
-            }
-            return null;
+            return switch (tank) {
+                case 0 -> uTank.getFluid();
+                case 1 -> sTank.getFluid();
+                default -> null;
+            };
         }
+
 
         @Override
         public int getTankCapacity(int tank) {
-            if (tank == 0) {
-                return MAX_UMATTER;
-            } else if (tank == 1) {
-                return MAX_STABILIZER;
-            }
-            return 0;
+            return switch (tank) {
+                case 0 -> MAX_UMATTER;
+                case 1 -> MAX_STABILIZER;
+                default -> 0;
+            };
         }
 
         @Override
         public boolean isFluidValid(int tank, @Nonnull FluidStack stack) {
-            if (tank == 0) {
-                return false;
-            } else if (tank == 1 && stack.getFluid().is(Tags.Fluids.STABILIZER)) {
-                return true;
-            }
-            return false;
+            return tank == 1 && stack.getFluid().is(Tags.Fluids.STABILIZER);
         }
 
         @Override
-        public int fill(FluidStack resource, FluidAction action) {
+        public int fill(FluidStack resource, @NotNull FluidAction action) {
             if (resource.getFluid().is(Tags.Fluids.STABILIZER)) {
-                if (MAX_STABILIZER - getSTank().getFluidAmount() < resource.getAmount()) {
-                    return sTank.fill(new FluidStack(resource.getFluid(), MAX_STABILIZER), action);
-                } else {
-                    return sTank.fill(resource, action);
-                }
+                int fillAmount = Math.min(resource.getAmount(), MAX_STABILIZER - getSTank().getFluidAmount());
+                return sTank.fill(new FluidStack(resource.getFluid(), fillAmount), action);
             }
             return 0;
         }
+
 
         @Nonnull
         @Override
         public FluidStack drain(FluidStack resource, FluidAction action) {
             if (resource.getFluid().equals(ModContent.UMATTER.get())) {
-                if (uTank.getFluidAmount() < resource.getAmount()) {
-                    uTank.drain(uTank.getFluid(), action);
-                    return uTank.getFluid();
-                } else {
-                    uTank.drain(resource, action);
-                    return resource;
-                }
+                FluidStack toDrain = uTank.getFluidAmount() < resource.getAmount() ? uTank.getFluid() : resource;
+                uTank.drain(toDrain, action);
+                return toDrain;
             }
             return null;
         }
@@ -156,11 +145,7 @@ public class CreatorBlockEntity extends BlockEntity implements MenuProvider {
         @Nonnull
         @Override
         public FluidStack drain(int maxDrain, FluidAction action) {
-            if (uTank.getFluid().getFluid() != null) {
-                return uTank.drain(uTank.getFluid(), action);
-            } else {
-                return null;
-            }
+            return uTank.getFluid().getFluid() != null ? uTank.drain(uTank.getFluid(), action) : null;
         }
     };
 
@@ -203,7 +188,7 @@ public class CreatorBlockEntity extends BlockEntity implements MenuProvider {
         }
     }
 
-    @Override
+   @Override
     public void saveAdditional(CompoundTag compound) {
         super.saveAdditional(compound);
         CompoundTag tagSTank = new CompoundTag();

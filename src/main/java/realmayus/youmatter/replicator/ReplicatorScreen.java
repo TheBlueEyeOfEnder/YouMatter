@@ -1,5 +1,6 @@
 package realmayus.youmatter.replicator;
 
+import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -19,6 +20,7 @@ import net.neoforged.neoforge.fluids.FluidStack;
 import net.neoforged.neoforge.fluids.IFluidTank;
 import net.neoforged.neoforge.network.PacketDistributor;
 import realmayus.youmatter.ModContent;
+import realmayus.youmatter.YMConfig;
 import realmayus.youmatter.YouMatter;
 import realmayus.youmatter.network.server.PacketSettingsReplicator;
 import realmayus.youmatter.network.server.PacketShowNext;
@@ -113,7 +115,11 @@ public class ReplicatorScreen extends AbstractContainerScreen<ReplicatorMenu> {
         int yAxis = (mouseY - (height - imageHeight) / 2);
 
         if(xAxis >= 26 && xAxis <= 39 && yAxis >= 20 && yAxis <= 75) {
-            drawTooltip(guiGraphics, mouseX, mouseY, Arrays.asList(Component.literal(I18n.get("youmatter.gui.umatter.title")), Component.literal(I18n.get("youmatter.gui.umatter.description", replicator.getTank().getFluid().getAmount()))));
+            if (!replicator.getTank().isEmpty()) {
+                drawTooltip(guiGraphics, mouseX, mouseY, Arrays.asList(Component.literal(I18n.get(replicator.getTank().getFluidInTank(0).getTranslationKey())).withStyle(ChatFormatting.GOLD), Component.literal(I18n.get("youmatter.gui.umatter.description", replicator.getTank().getFluid().getAmount()))));
+            } else {
+                drawTooltip(guiGraphics, mouseX, mouseY, Arrays.asList(Component.literal(I18n.get("youmatter.gui.umatter.title")), Component.literal(I18n.get("youmatter.gui.umatter.description", replicator.getTank().getFluid().getAmount()))));
+            }
         }
 
         if(xAxis >= 127 && xAxis <= 142 && yAxis >= 59 && yAxis <= 79) {
@@ -139,12 +145,17 @@ public class ReplicatorScreen extends AbstractContainerScreen<ReplicatorMenu> {
             if(ItemStack.isSameItem(givenItem, hoveredSlot.getItem())) {
                 List<Component> existingTooltips =  super.getTooltipFromContainerItem(givenItem);
                 existingTooltips.add(Component.literal(""));
-                existingTooltips.add(Component.literal(I18n.get("gui.youmatter.requiredAmount", GeneralUtils.getUMatterAmountForItem(givenItem.getItem()))));
+                if(YMConfig.CONFIG.useRecursion.get()) {
+                    existingTooltips.add(Component.literal(I18n.get("gui.youmatter.requiredAmount", GeneralUtils.getUMatterValueRecursively(givenItem, Minecraft.getInstance().level.registryAccess(), Minecraft.getInstance().level.getRecipeManager()))));
+                } else {
+                    existingTooltips.add(Component.literal(I18n.get("gui.youmatter.requiredAmount", GeneralUtils.getUMatterAmountForItem(givenItem.getItem()))));
+                }
                 return existingTooltips;
             }
         }
         return super.getTooltipFromContainerItem(givenItem);
     }
+
 
     //both drawFluid and drawFluidTank is courtesy of DarkGuardsMan and was modified to suit my needs. Go check him out: https://github.com/BuiltBrokenModding/Atomic-Science | MIT License |  Copyright (c) 2018 Built Broken Modding License: https://opensource.org/licenses/MIT
     private void drawFluid(GuiGraphics guiGraphics, int x, int y, int line, int col, int width, int drawSize, FluidStack fluidStack)
